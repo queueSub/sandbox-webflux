@@ -7,7 +7,7 @@ import reactor.core.publisher.Mono
 import reactor.test.StepVerifier
 import java.time.LocalDateTime
 
-class OperatorTest {
+class SequenceCreateOperatorTest {
 
     @Test
     @DisplayName("justOrEmpty 는 Null 일 경우 NPE 대신 onComplete 시그널 전송")
@@ -64,4 +64,28 @@ class OperatorTest {
             }
             .verifyComplete()
     }
+
+    @Test
+    @DisplayName("generate 는 동기적으로 데이터를 순차적으로 하나씩 emit 한다.")
+    fun generateTest() {
+        StepVerifier
+            .create(
+                Flux.generate (
+                    { 0 }, // emit 데이터 초기값 지정
+                    { state, sink ->
+                        sink.next(state) // synchronousSink 객체를 통해 동기적으로 하나만 emit (0 ~ 10)
+                        if(state == 10) {
+                            sink.complete() // onComplete signal 발생
+                        }
+                        state + 1 // next state
+                    }
+                )
+            )
+            .expectNext(0)
+            .expectNextCount(9)
+            .expectNext(10)
+            .verifyComplete()
+    }
+
+
 }
