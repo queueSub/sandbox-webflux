@@ -3,6 +3,7 @@ package queue.prac.webflux.operators
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
 import reactor.test.StepVerifier
 import java.time.Duration
 
@@ -69,10 +70,27 @@ class SequenceTransformOperator {
             Flux.zip(
                 Flux.just("김", "최").delayElements(Duration.ofMillis(300)),
                 Flux.just("민수", "정환", "민지").delayElements(Duration.ofMillis(500)),
-                { t1, t2 -> "${t1}${t2}"} // emit 된 데이터 묶음을 변환 후 emit 할 수 있다.
+                { t1, t2 -> "${t1}${t2}" } // emit 된 데이터 묶음을 변환 후 emit 할 수 있다.
             )
         )
             .expectNext("김민수", "최정환")
             .verifyComplete()
+    }
+
+    @Test
+    @DisplayName("and 는 두 퍼블리셔가 모두 Complete 될 때까지 기다린 후 구독자에게 Complete 시그널만 반환한다.")
+    fun andTest() {
+        StepVerifier.create(
+            Mono
+                .just(1)
+                .delayElement(Duration.ofMillis(1000))
+                .doOnNext { println("doOnNext: $it") }  // 데이터는 emit 되지만 구독자에게는 전달되지 않음
+                .and(
+                    Flux.just(2, 3).delayElements(Duration.ofMillis(600))
+                        .doOnNext { println("doOnNext: $it") }) // 데이터는 emit 되지만 구독자에게는 전달되지 않음
+                .doOnNext { println("doOnNext: 1 2 3") } // 출력되지 않음
+        )
+            .expectNext() // Mono<Void> 검증
+            .verifyComplete() // Complete 시그널만 전달됨
     }
 }
