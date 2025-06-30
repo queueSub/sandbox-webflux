@@ -93,4 +93,31 @@ class SequenceTransformOperator {
             .expectNext() // Mono<Void> 검증
             .verifyComplete() // Complete 시그널만 전달됨
     }
+
+
+    // Flux To Mono
+
+    @Test
+    @DisplayName("collectList 는 Flux에서 emit된 데이터를 모아 List로 변환 후, List를 emit 하는 Mono를 반환")
+    fun collectListTest() {
+        StepVerifier.create(
+            Flux
+                .just("Apple", "Banana", "Orange")
+                .collectList()
+        )
+            .expectNext(listOf("Apple", "Banana", "Orange"))
+            .verifyComplete()
+    }
+
+    @Test
+    @DisplayName("collectMap 은 Flux에서 emit된 데이터를 기반으로 key,value 를 생성해 Map을 emit 하는 Mono를 반환")
+    fun collectMapTest() {
+        StepVerifier.create(
+            Flux.just("Apple", "Banana", "Orange")
+                .collectMap({ it.lowercase() }, { it })
+        )
+            .expectNext(mapOf("apple" to "Apple", "banana" to "Banana", "orange" to "Orange"))
+            .verifyComplete()
+    }
+
 }
